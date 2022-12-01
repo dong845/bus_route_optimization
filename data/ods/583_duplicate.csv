@@ -1,0 +1,6 @@
+line_name,line_begin,line_end,orderid_a,orderid_b,station_name_a,station_name_b,occur_num,line_num_line_id,num_new_station_id_a,num_new_station_id_b,direction
+583路,地铁黄渠站,翠福园小区,14,15,北京胸科医院,富河园小区,2,583,14,15,0
+583路,地铁黄渠站,翠福园小区,14,16,北京胸科医院,西潞苑小区,2,583,14,16,0
+583路,翠福园小区,地铁黄渠站,0,1,翠福园小区,北马庄南,2,583,0,1,1
+583路,翠福园小区,地铁黄渠站,0,2,翠福园小区,西潞苑小区,2,583,0,2,1
+583路,翠福园小区,地铁黄渠站,0,3,翠福园小区,富河园小区,2,583,0,3,1
