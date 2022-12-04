@@ -174,9 +174,9 @@ max_lat = max(end_point[1], start_point[1])
 print(min_lng, min_lat, max_lng, max_lat)
 candidate_stops = []
 
-expand_range = 0.4
+expand_range = 0.15
 for item in stations:
-    if judges(start_point, end_point, item) and judges(end_point, start_point, item) and item[0] >= min_lng-expand_range and item[0] <= max_lng+expand_range and item[1] <= max_lat+expand_range and item[1] >= min_lat-expand_range:
+    if item[0] >= min_lng-expand_range and item[0] <= max_lng+expand_range and item[1] <= max_lat+expand_range and item[1] >= min_lat-expand_range:
         candidate_stops.append(item)
 candidate_pois = []
 expand_range1 = expand_range+0.001
@@ -194,8 +194,8 @@ q = queue.Queue()
 q.put(start_point)
 tags = [True]*len(candidate_stops)
 times = 0
-start_dis = 0.25
-end_dis = 0.75
+start_dis = 0.35
+end_dis = 0.7
 node_set = []
 while not q.empty():
     ss = q.qsize()
@@ -329,7 +329,7 @@ class Ant():
         self.id = id
         self.alpha = alpha
         self.beta = beta
-        self.epsilon = 0.4
+        self.epsilon = 0.3
         self.pheromone_matrix = pheromone_matrix
         self.distance_matrix = distance_matrix  # matrix of replication
         self.new()
@@ -377,6 +377,7 @@ class Ant():
         total_prob = 0.0
         next_city = -1
         indexes = []
+        # print("next...")
         for i in range(len(nodes)):
             if self.city_status[int(nodes[i])]:
                 self.path.append(nodes[i])
@@ -455,7 +456,7 @@ class ACO():
         for i in range(num_points):
             for j in range(num_points):
                 if jd:
-                    self.pheromone_matrix[i, j] = self.pheromone_matrix[i, j]+temp_pheromone[i, j]*self.rho*3
+                    self.pheromone_matrix[i, j] = self.pheromone_matrix[i, j]+temp_pheromone[i, j]*self.rho
                 else:
                     self.pheromone_matrix[i, j] = self.pheromone_matrix[i, j]-temp_pheromone[i, j]*self.rho
                 if self.pheromone_matrix[i, j] < 0:
@@ -467,13 +468,10 @@ class ACO():
         num_points = self.distance_matrix.shape[0]
         temp_pheromone = np.zeros((num_points, num_points))
         times = 0
-        indexes = []
         for ant in self.ants:
             if not jd[times]:
                 for i in range(1, len(ant.path)):
                     temp_pheromone[int(ant.path[i-1]), int(ant.path[i])] += 1
-            else:
-                indexes.append((int(ant.path[i-1]), int(ant.path[i])))
             times+=1
         
         temp_pheromone = temp_pheromone/self.ant_num
@@ -482,10 +480,6 @@ class ACO():
                 self.pheromone_matrix[i, j] = self.pheromone_matrix[i, j]-temp_pheromone[i, j]*self.rho
                 if self.pheromone_matrix[i, j] < 0:
                         self.pheromone_matrix[i, j] = 0
-        if len(indexes)>0:
-            for k in range(len(indexes)):
-                i, j = indexes[k]
-                self.pheromone_matrix[i, j] = self.pheromone_matrix[i,j]+0.5
         self.ants = [Ant(ID, self.alpha, self.beta, self.distance_matrix, self.pheromone_matrix)
                      for ID in range(self.ant_num)]
 
@@ -522,7 +516,7 @@ class ACO():
         return self.best_ant.path, self.best_ant.overall_score
 
 p_mat = np.ones((rep_mat.shape[0], rep_mat.shape[1]))
-aco = ACO(100, 800, 0.2, 100, rep_mat, p_mat)
+aco = ACO(100, 300, 0.15, 100, rep_mat, p_mat)
 path, overall_score = aco.search_path_v1()
 print("path:", path)
 print("overall_score:", overall_score)

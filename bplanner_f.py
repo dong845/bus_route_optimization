@@ -16,21 +16,12 @@ json_path = "./data/line_station.json"
 pos_path = "./data/pos_station.json"
 subway_path = "./data/subway.csv"
 duplicate_path = "./data/duplicate.csv"
-taxi_path = "20220301.csv"
+taxi_pathes = ["20220301.csv"]
 
-
-def overlap_rate(line, total_lines, lk):
-    nums = 0
-    for key in total_lines:
-        if key != lk:
-            line_tmp = total_lines[key]
-            for i in range(len(line_tmp)):
-                if line_tmp[i] in line:
-                    nums += 1
-                    break
-    return float(nums/len(total_lines.keys()))
-
-
+w0 = 0.4
+w1 = 0.6
+w2 = 0.25
+w3 = 0.3
 def geodistance(lng1, lat1, lng2, lat2):
     lng1, lat1, lng2, lat2 = map(
         radians, [float(lng1), float(lat1), float(lng2), float(lat2)])
@@ -130,17 +121,18 @@ print(list(duplicate_dict.keys())[:5])
 
 # flow dict: key is lng-lat pair and value is flow number
 flow_num_dict = dict()
-with open(taxi_path, "r") as f:
-    taxi_data = f.readlines()
-    for i in range(1, len(taxi_data)):
-        infos = taxi_data[i].strip().split(',')
-        lng_info = float(infos[1])
-        lat_info = float(infos[2])
-        flow_info = int(infos[4])
-        if flow_info == 1 and tuple([lng_info, lat_info]) not in flow_num_dict:
-            flow_num_dict[tuple([lng_info, lat_info])] = 1
-        elif flow_info == 1:
-            flow_num_dict[tuple([lng_info, lat_info])] += 1
+for taxi_path in taxi_pathes:
+    with open(taxi_path, "r") as f:
+        taxi_data = f.readlines()
+        for i in range(1, len(taxi_data)):
+            infos = taxi_data[i].strip().split(',')
+            lng_info = float(infos[1])
+            lat_info = float(infos[2])
+            flow_info = int(infos[4])
+            if flow_info == 1 and tuple([lng_info, lat_info]) not in flow_num_dict:
+                flow_num_dict[tuple([lng_info, lat_info])] = 1
+            elif flow_info == 1:
+                flow_num_dict[tuple([lng_info, lat_info])] += 1
 # =====================================================================================================
 
 line_lng = []
@@ -234,7 +226,7 @@ def get_flow(point):
     return total_flows
 
 
-def get_score(line):
+def get_score(line, w0, w1, w2, w3):
     total_score = 0
     total_pois = 0
     total_subways = 0
@@ -263,8 +255,8 @@ def get_score(line):
         total_duplicates += duplicate_num
         flow_num = get_flow(line[i])
         total_flows += flow_num
-        total_score = total_score+0.4*num_poi+0.6 * \
-            num_subway-0.25*duplicate_num+flow_num
+        total_score = total_score+w0*num_poi+w1 * \
+            num_subway-w2*duplicate_num+flow_num*w3
     print("total pois:", total_pois)
     print("total subways:", total_subways)
     print("total duplicates:", total_duplicates)
@@ -273,10 +265,10 @@ def get_score(line):
 
 
 print("length of actual line:", len(actual_stations))
-print("avg score of actual line:", get_score(actual_stations))
+print("avg score of actual line:", get_score(actual_stations, w0, w1, w2, w3))
 
 
-def judge_line(start_node, end_node, G, ends):
+def judge_line(start_node, end_node, G, ends, w):
     judge = False
     start_lng, start_lat = start_node
     end_lng, end_lat = end_node
@@ -320,7 +312,8 @@ def judge_line(start_node, end_node, G, ends):
                 return False
         return True
 
-    def cal_score(start_point, point):
+    def cal_score(start_point, point, w):
+        w0, w1, w2, w3 = w
         pos_point = trans(point)
         num_poi = 0
         for poi in candidate_pois:
@@ -337,7 +330,7 @@ def judge_line(start_node, end_node, G, ends):
             num_duplicate = duplicate_dict[tuple(
                 [info_pos[tuple(pos_point)], info_pos[tuple(trans(start_point))]])]
         num_flow = get_flow(pos_point)
-        total_score = 0.4*num_poi+0.6*num_subway-0.25*num_duplicate+num_flow
+        total_score = w0*num_poi+w1*num_subway-w2*num_duplicate+num_flow*w3
         return total_score
 
     def explore_dfs(starts, ends, line):
@@ -350,11 +343,7 @@ def judge_line(start_node, end_node, G, ends):
             return
 
         for node in G.neighbors(starts):
-            if len(line) >= 3 and criter3(line) and criter4(line) and criter5(line):
-                line.append(node)
-                explore_dfs(node, ends, line)
-                line.pop()
-            elif len(line) < 3:
+            if (len(line) >= 3 and criter3(line) and criter4(line) and criter5(line)) or (len(line) < 3 and criter3(line) and criter4(line)):
                 line.append(node)
                 explore_dfs(node, ends, line)
                 line.pop()
@@ -374,7 +363,7 @@ def judge_line(start_node, end_node, G, ends):
             print("suitable line:", line)
             ts = 0
             for i in range(1, len(line)):
-                ts += cal_score(line[i-1], line[i])
+                ts += cal_score(line[i-1], line[i], w)
             lines[tuple(line)] = float(ts/len(line))
             return
         poi_dict = dict()
@@ -383,7 +372,7 @@ def judge_line(start_node, end_node, G, ends):
             line.append(node)
             explore_dfs(node, ends, line)
             if judge:
-                poi_dict[node] = cal_score(starts, node)
+                poi_dict[node] = cal_score(starts, node, w)
             line.pop()
 
         if len(poi_dict) == 0:
@@ -407,8 +396,8 @@ def judge_line(start_node, end_node, G, ends):
     explore_pois(node_start_tmp, node_end_tmp, [node_start_tmp])
     return lines
 
-
-lines = judge_line(start_point, end_point, G, len(candidate_stops)+1)
+w = [w0, w1, w2, w3]
+lines = judge_line(start_point, end_point, G, len(candidate_stops)+1, w)
 a = sorted(lines.items(), key=lambda x: x[1], reverse=True)
 
 temp_line = list(a[0][0])
