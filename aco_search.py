@@ -522,7 +522,7 @@ class ACO():
         return self.best_ant.path, self.best_ant.overall_score
 
 p_mat = np.ones((rep_mat.shape[0], rep_mat.shape[1]))
-aco = ACO(100, 800, 0.2, 100, rep_mat, p_mat)
+aco = ACO(60, 1200, 0.2, 100, rep_mat, p_mat)
 path, overall_score = aco.search_path_v1()
 print("path:", path)
 print("overall_score:", overall_score)
