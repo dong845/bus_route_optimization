@@ -47,6 +47,8 @@ def dist(point1, point2):
     return math.sqrt(xx+yy)
 
 def cal_cos(point1, point2, point3):
+    if point3==point2 or point3==point1:
+        return 0
     line1 = [point2[0]-point1[0], point2[1]-point1[1]]
     dist1 = dist(point1, point2)
     line2 = [point3[0]-point1[0], point3[1]-point1[1]]

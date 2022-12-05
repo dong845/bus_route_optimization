@@ -47,6 +47,8 @@ def dist(point1, point2):
     return math.sqrt(xx+yy)
 
 def cal_cos(point1, point2, point3):
+    if point3==point2 or point3==point1:
+        return 0
     line1 = [point2[0]-point1[0], point2[1]-point1[1]]
     dist1 = dist(point1, point2)
     line2 = [point3[0]-point1[0], point3[1]-point1[1]]
@@ -174,9 +176,9 @@ max_lat = max(end_point[1], start_point[1])
 print(min_lng, min_lat, max_lng, max_lat)
 candidate_stops = []
 
-expand_range = 0.4
+expand_range = 0.2
 for item in stations:
-    if judges(start_point, end_point, item) and judges(end_point, start_point, item) and item[0] >= min_lng-expand_range and item[0] <= max_lng+expand_range and item[1] <= max_lat+expand_range and item[1] >= min_lat-expand_range:
+    if cal_cos(start_point, end_point, item)>=-0.1 and cal_cos(end_point, start_point, item)>=-0.1 and item[0] >= min_lng-expand_range and item[0] <= max_lng+expand_range and item[1] <= max_lat+expand_range and item[1] >= min_lat-expand_range:
         candidate_stops.append(item)
 candidate_pois = []
 expand_range1 = expand_range+0.001
