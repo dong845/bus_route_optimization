@@ -412,9 +412,7 @@ class Ant():
         else:
             self.path.append(nodes[next_city])
             self.city_status[int(nodes[next_city])] = False
-            self.overall_score = self.overall_score + \
-                score_dict[self.current_pos]-0.25 * \
-                self.distance_matrix[int(self.current_pos), int(nodes[next_city])]
+            self.overall_score = self.overall_score + score_dict[self.current_pos]
             self.total_rep+=self.distance_matrix[int(self.current_pos), int(nodes[next_city])]
             self.move_count += 1
             return nodes[next_city]
